@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    {%block 'head' %}{% endblock %}
+
+    <title>{%block 'titulo' %} Base {% endblock %}</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+
+        <a href="{% url 'home' %}" class="navbar-brand">Página Inicial</a>
+
+        {% if usuario_logado %}
+        <div class="dropdown show">
+            <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Menu
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink">
+                <button type="button" class="dropdown-item" data-toggle="modal" data-target="#exampleModalCenter">
+                    Cadastrar Livro
+                </button>
+                <a class="dropdown-item" href="{% url 'seus_emprestimos' %}">Seus emprestimos</a>
+                <a class="dropdown-item" href="{% url 'sair' %}">Sair</a>
+
+
+            </div>
+        </div>
+
+        {% else %}
+        <a class="btn btn-success" href="{% url 'login' %}">Login</a>
+        {% endif %}
+
+
+    </nav>
+    <br>
+
+    {%block 'conteudo' %}{% endblock %}
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if usuario_logado %}
+
+    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Cadastrar / Emprestar / Devolver</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <button onclick="mostrar_form(1)" class="btn btn-primary">Categoria</button>
+                    <button onclick="mostrar_form(2)" class="btn btn-primary">Livro</button>
+                    <button onclick="mostrar_form(3)" class="btn btn-primary">Emprestimo</button>
+                    <button onclick="mostrar_form(4)" class="btn btn-primary">Devolução</button>
+
+                    <div class="livro" style="display: none;" id="livro">
+                        <form action="{% url 'cadastrar_livro' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <br>
+                            <!-- Model Form -->
+                            <table>
+                                {{form.as_table}}
+                            </table>
+
+                            <input type="submit" value="Cadastrar" class="btn btn-success">
+                        </form>
+                    </div>
+                    <!-- Form Html -->
+
+                    <div style="display: none;" class="categoria" id="categoria">
+                        <br>
+                        <form action="{% url 'cadastrar_categoria' %}" method="POST">
+                            {% csrf_token %}
+                            <table>
+                                {{form_categoria_livro.as_table}}
+
+                            </table>
+                            <input type="hidden" name="id_livro" value="{{livro_id}}">
+                            <input type="submit" class="btn btn-success" value="Enviar">
+
+                        </form>
+                    </div>
+                    <!-- Form -->
+                    <div style="display: none;" class="Devoluçãos" id="emprestimo">
+                        <br>
+                        <div class="form-check">
+                            <input onclick="mostrar_usuario(1)" class="form-check-input" type="radio"
+                                name="flexRadioDefault" id="flexRadioDefault1">
+                            <label class="form-check-label" for="flexRadioDefault1">
+                                Usuário Cadastrado
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input onclick="mostrar_usuario(2)" class="form-check-input" type="radio"
+                                name="flexRadioDefault" id="flexRadioDefault2" checked>
+                            <label class="form-check-label" for="flexRadioDefault2">
+                                Usuário não cadastrado
+                            </label>
+                        </div>
+                        <br>
+                        <form action="{% url 'cadastrar_emprestimo' %}" method="POST">
+                            {% csrf_token %}
+
+                            <!-- Usuario existente -->
+                            <select style="display:none;" class="form-control" aria-label="Default select example"
+                                id="cadastrado" name="usuario_cadastrado">
+
+                                {% for usuario in usuarios %}
+                                <option value="{{usuario.id}}">{{usuario.nome}}</option>
+                                {% endfor %}
+
+                            </select>
+                            <!-- Usuario anonimo -->
+                            <input type="text" placeholder="Digite o nome para quem emprestou..." name="usuario_anonimo"
+                                class="form-control" id="anonimo">
+
+                            <br>
+                            <select name="livro_emprestado" class="form-control" aria-label="Default select example">
+
+                                {% for livro in livros_nao_emprestados %}
+                                <option value="{{livro.id}}">{{livro}}</option>
+                                {% endfor %}
+
+                            </select>
+
+                            <br>
+                            <input type="submit" class="btn btn-success" value="Emprestar">
+
+
+
+                        </form>
+
+                    </div>
+
+                    <div style="display: none;" id="devolucao">
+                        <br>
+                        <form action="{% url 'devolver_livro' %}" method="POST">
+                            {% csrf_token %}
+                            <select name="livro_devolvido" class="form-control">
+                                {% for livro in livros_emprestados %}
+                                <option value="{{livro.id}}">{{livro}}</option>
+                                {% endfor %}
+                            </select>
+                            <br>
+                            <input type="submit" class="btn btn-success" value="Devolver">
+                        </form>
+
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <script>
+        function mostrar_form(value) {
+            categoria = document.getElementById('categoria')
+            livro = document.getElementById('livro')
+            emprestimo = document.getElementById('emprestimo')
+
+            if (value == 1) {
+                categoria.style.display = "block";
+                livro.style.display = "none";
+                emprestimo.style.display = "none";
+                devolucao.style.display = "none";
+            }
+            else if (value == 2) {
+                categoria.style.display = "none";
+                livro.style.display = "block";
+                emprestimo.style.display = "none";
+                devolucao.style.display = "none";
+            }
+            else if (value == 3) {
+                categoria.style.display = "none";
+                livro.style.display = "none";
+                emprestimo.style.display = "block";
+                devolucao.style.display = "none";
+
+            }
+            else if (value == 4) {
+                categoria.style.display = "none";
+                livro.style.display = "none";
+                emprestimo.style.display = "none";
+                devolucao.style.display = "block";
+            }
+        }
+
+        function mostrar_usuario(value) {
+            cadastrado = document.getElementById('cadastrado')
+            anonimo = document.getElementById('anonimo')
+
+            if (value == 1) {
+                cadastrado.style.display = "block";
+
+                anonimo.style.display = "none";
+            }
+            else if (value == 2) {
+
+                cadastrado.style.display = "none";
+                anonimo.style.display = "block";
+            }
+        }
+
+    </script>
+
+
+</body>
+
+</html>
